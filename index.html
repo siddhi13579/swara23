@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stock Price Predictor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+}
+
+h1 {
+    margin-top: 20px;
+}
+
+select, input, button {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #16a34a;
+}
+
+canvas {
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>📈 Stock Price Predictor</h1>
+
+    <select id="stock">
+        <option value="AAPL">Apple (AAPL)</option>
+        <option value="TSLA">Tesla (TSLA)</option>
+        <option value="GOOG">Google (GOOG)</option>
+        <option value="MSFT">Microsoft (MSFT)</option>
+    </select>
+
+    <input type="number" id="days" value="7" min="1" max="30">
+    <button onclick="loadStock()">Load Data</button>
+
+    <h2>📊 Price Chart</h2>
+    <canvas id="chart"></canvas>
+
+    <h2>🔮 Predicted Price</h2>
+    <p id="prediction">--</p>
+</div>
+
+<script>
+let chart;
+
+async function loadStock() {
+    const stock = document.getElementById("stock").value;
+
+    // Free API (demo)
+    const url = `https://api.allorigins.win/raw?url=https://query1.finance.yahoo.com/v8/finance/chart/${stock}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const prices = data.chart.result[0].indicators.quote[0].close;
+    const timestamps = data.chart.result[0].timestamp;
+
+    const labels = timestamps.map(t => {
+        const d = new Date(t * 1000);
+        return d.toLocaleDateString();
+    });
+
+    // Destroy old chart
+    if (chart) chart.destroy();
+
+    const ctx = document.getElementById("chart").getContext("2d");
+
+    chart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: stock + " Price",
+                data: prices,
+                borderColor: "#22c55e",
+                fill: false
+            }]
+        }
+    });
+
+    // Fake prediction (simple trend)
+    const lastPrice = prices[prices.length - 1];
+    const prevPrice = prices[prices.length - 2];
+
+    const trend = lastPrice - prevPrice;
+    const predicted = lastPrice + trend * 2;
+
+    document.getElementById("prediction").innerText =
+        "$ " + predicted.toFixed(2);
+}
+</script>
+
+</body>
+</html>
